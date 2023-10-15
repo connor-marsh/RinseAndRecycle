@@ -1,8 +1,14 @@
 #include <RedBot.h>
+#include <Servo.h>
 
 RedBotMotors motors;
 RedBotEncoder encoder = RedBotEncoder(A4, A5);
-const int MOTOR_SPEED = 90;
+Servo support;
+const int SUPPORT_DROP_ANGLE = 130;
+const int SUPPORT_HOLD_ANGLE = 40;
+
+const int MOTOR_SPEED = 200;
+const int MOTOR_SPEED_LOW = 80;
 const int MOTOR_TURNS = 10;
 const int countsPerRev = 192;   // 4 pairs of N-S x 48:1 gearbox = 192 ticks per wheel rev
 
@@ -26,17 +32,18 @@ void setup() {
   pinMode(DIR, OUTPUT);
   pinMode(STEP, OUTPUT);
   pinMode(PUMP, OUTPUT);
+  support.attach(10);
   Serial.println("WAIT FOR BEAM BREAK");
   
 
 }
 
 void loop() {
-  // REMEMBER TO CHANGE THIS TO LESS THEN WHEN THE BEAM BREAKS R PROPERLY MOUNTED******
-  if (analogRead(BEAM_BREAK > 100)) {
+  support.write(SUPPORT_HOLD_ANGLE);
+  if (analogRead(BEAM_BREAK > 30)) {
     beamHasConnected=true;
   }
-  if (analogRead(BEAM_BREAK) < 30 && beamHasConnected) {
+  if (analogRead(BEAM_BREAK) < 4 && beamHasConnected) {
   beamHasConnected = false;
   Serial.println("DELAY FOR USER SAFETY");
   delay(3000);
@@ -72,6 +79,28 @@ void loop() {
   Serial.println("STOP STEPPER");
   delay(500);
   Serial.println("START PULLEYS");
+  // Not encoder using code
+  //motors.brake();
+  motors.stop();
+  support.write(SUPPORT_DROP_ANGLE);
+  delay(500);
+  support.detach();
+  delay(2000);
+  
+  motors.rightMotor(MOTOR_SPEED);
+  motors.leftMotor(MOTOR_SPEED);
+  int stopCount = 0;
+  while (digitalRead(LIMIT_SWITCH) == LOW && stopCount < 100) {
+    stopCount++;
+    delay(50);
+  }
+  support.attach(10);
+  delay(100);
+  support.write(SUPPORT_HOLD_ANGLE);
+  motors.stop();
+  delay(1000);
+  
+  /* ENCODER USING CODE
   while (encoder.getTicks(RIGHT)<=MOTOR_TURNS*countsPerRev && encoder.getTicks(LEFT)<=MOTOR_TURNS*countsPerRev) {
     motors.rightMotor(MOTOR_SPEED);
     motors.leftMotor(MOTOR_SPEED);
@@ -90,6 +119,7 @@ void loop() {
   motors.brake();
   encoder.clearEnc(RIGHT);
   encoder.clearEnc(LEFT);
+  */
   Serial.println("WAIT FOR BEAM BREAK");
 
   
