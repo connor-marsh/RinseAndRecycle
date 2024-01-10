@@ -42,4 +42,4 @@ With 500 microseconds setting A4988 STEP to HIGH
 then 500 microseconds setting A4988 STEP to LOW
 
 Sensor notes:
-Beam break sensor analog read value > 350 means the beam is broken
+Beam break sensor analog read value < 100 means the beam is broken
